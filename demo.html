@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+	.wrapper {
+		width: 810px;
+		height: 410px;
+		margin: 40px auto;
+		text-align: center;
+	}
+	.polar,
+	.pie {
+		display: inline-block;
+		width: 400px;
+		height: 400px;
+	}
+</style>
+</head>
+<body>
+	<div class="wrapper">
+		<div class="polar"></div>
+		<div class="pie"></div>
+	</div>
+	
+	<script type="text/javascript" src="./jquery.js"></script>
+	<script type="text/javascript" src="./echarts.js"></script>
+	<script type="text/javascript">
+
+		// 获取echarts实例
+		var pie = echarts.init(document.getElementsByClassName("pie")[0]);
+		var polar = echarts.init(document.getElementsByClassName("polar")[0]);
+		var globalData;
+
+		// 获取数据
+		getData();
+
+		// 点击不同的柱状图，分别出现对应的饼转图
+		polar.on("click", function (e) {
+			initPie(e.dataIndex);
+		})
+
+		// 用于获取数据
+		function getData () {
+			$.ajax("https://www.easy-mock.com/mock/5aa3d7bcdc3b2d7b9d0e99ff/fortest/echarts-test", {
+				method: "GET",
+				data: "",
+				success: function (data) {
+					globalData = data;	
+					initPolar(globalData);
+				},
+				error: function () {
+					console.log("error");
+				}
+			})
+		}
+
+		// 显示柱状图
+		function initPolar () {
+			data = sortData(globalData);
+			var option = {
+				title: {
+					text: '2016-2018年销售分析'
+				},
+				tooltip: {},
+				legend: {
+					data:['']
+				},
+				xAxis: {
+					data: fill(globalData, "name")
+				},
+				yAxis: {},
+				series: [{
+					name: '总销量',
+					itemStyle: {
+						normal: {
+						},
+						emphasis: {
+							barBorderWidth: 1,
+							shadowBlur: 10,
+							shadowOffsetX: 0,
+							shadowOffsetY: 0,
+							shadowColor: 'rgba(0,0,0,0.5)'
+						}
+					},
+					type: 'bar',
+					data: fill(globalData, "num"),
+					markPoint : {
+						data : [
+						{type : 'max', name: '最大值'},
+						{type : 'min', name: '最小值'}
+						]
+					}
+				}],
+				color: ["#404B69"]
+			};
+
+			polar.setOption(option);
+		}
+
+		// 显示饼状图
+		function initPie (index) {
+			option = {
+				title: {
+					text: '每年销量',
+					left: 'center',
+					top: 20,
+					textStyle: {
+						color: '#333'
+					}
+				},
+
+				tooltip : {
+					trigger: 'item',
+					formatter: "{a} <br/>{b} : {c} ({d}%)"
+				},
+
+				visualMap: {
+					show: false,
+					min: 80,
+					max: 600,
+					inRange: {
+						colorLightness: [0, 1]
+					}
+				},
+				series : [
+				{
+					name:'年份',
+					type:'pie',
+					radius : '55%',
+					center: ['50%', '50%'],
+					data: fillPie(index),
+					roseType: 'radius',
+					label: {
+						normal: {
+							textStyle: {
+								color: "#424242"
+							}
+						}
+					},
+					labelLine: {
+						normal: {
+							lineStyle: {
+								color: "#424242"
+							},
+							smooth: 0.2,
+							length: 10,
+							length2: 20
+						}
+					},
+					itemStyle: {
+						normal: {
+							color: '#c23531',
+		                    shadowBlur: 20,
+		                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+						}
+					},
+
+					animationType: 'scale',
+					animationEasing: 'elasticOut',
+					animationDelay: function (idx) {
+						return Math.random() * 200;
+					}
+				}
+				]
+			};
+			pie.setOption(option);
+		}
+
+		// 用于将柱状图数据根据销量由小到大排列
+		function sortData (data) {
+			data.sort(function (a, b) {
+				return a.num - b.num;
+			})
+			return data;
+		}
+
+		// 将获取的数据转换成符合echarts接口参数的形式 --柱状图
+		function fill (data, kind) {
+			var arr = [];
+			data.forEach(function (elem, index) {
+				arr[index] = elem[kind]
+			})
+
+			return arr;
+		}
+
+		// 将获取的数据转换成符合echarts接口参数的形式 --饼状图
+		function fillPie (index) {
+			var arr = [];
+			globalData[index]["year"].forEach(function (elem, index) {
+				arr[index] = {value: elem["num"], name: elem["y"]}
+			})
+			return arr;
+		}
+
+	</script>
+</body>
+</html>
